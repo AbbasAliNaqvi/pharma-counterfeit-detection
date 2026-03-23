@@ -1,0 +1,9 @@
+{
+  "accuracy": 0.96,
+  "f1_weighted": 0.9599639675708137,
+  "precision_weighted": 0.9616619831393014,
+  "recall_weighted": 0.96,
+  "auc_roc": 0.9947416666666666,
+  "checkpoint_epoch": 12,
+  "checkpoint_val_acc": 0.97
+}
