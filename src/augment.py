@@ -80,7 +80,6 @@ TRANSFORMS = {
 T_NAMES = list(TRANSFORMS.keys())
 
 
-# ════════════════════════════════════════════════════════════════════════
 def preprocess(img: np.ndarray) -> np.ndarray:
     """Resize to IMG_SIZE × IMG_SIZE using high-quality Lanczos interpolation."""
     return cv2.resize(img, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LANCZOS4)
