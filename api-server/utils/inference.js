@@ -1,8 +1,11 @@
 const ort = require("onnxruntime-web");
 const sharp = require("sharp");
+const fs = require("fs");
 const path = require("path");
 
-const MODEL_PATH = path.join(__dirname, "../../models/pharmaguard.onnx");
+const MODEL_PATH = process.env.MODEL_PATH
+  ? path.resolve(process.env.MODEL_PATH)
+  : path.join(__dirname, "../models/pharmaguard.onnx");
 const IMG_SIZE = 224;
 const MEAN = [0.485, 0.456, 0.406];
 const STD = [0.229, 0.224, 0.225];
@@ -11,6 +14,10 @@ const CLASSES = { 0: "Authentic", 1: "Counterfeit" };
 let _session = null;
 
 async function getSession() {
+  if (!fs.existsSync(MODEL_PATH)) {
+    throw new Error(`Model file not found at ${MODEL_PATH}`);
+  }
+
   if (!_session) {
     _session = await ort.InferenceSession.create(MODEL_PATH);
   }
