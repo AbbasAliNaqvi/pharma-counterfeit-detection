@@ -34,31 +34,35 @@ const login = (req, res) => {
   });
 };
 
-const getAllKeys = (req, res) => {
-  const keys = KeyStore.load();
-  res.json({
-    success: true,
-    total_keys: Object.keys(keys).length,
-    keys: Object.entries(keys).map(([k, v]) => ({
-      prefix: k.slice(0, 8) + "...",
-      name: v.name,
-      requests: v.requests,
-      rate_limit: v.rateLimit,
-      active: v.active,
-      admin: v.admin,
-      created: v.created,
-    })),
-  });
+const getAllKeys = async (req, res, next) => {
+  try {
+    const keys = await KeyStore.listKeys();
+    res.json({
+      success: true,
+      total_keys: keys.length,
+      keys: keys.map((keyDoc) => ({
+        prefix: keyDoc.key.slice(0, 8) + "...",
+        name: keyDoc.name,
+        email: keyDoc.email,
+        requests: keyDoc.requests,
+        rate_limit: keyDoc.rateLimit,
+        active: keyDoc.active,
+        admin: keyDoc.admin,
+        created: keyDoc.createdAt,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-const getStats = (req, res) => {
-  const keys = KeyStore.load();
-  res.json({
-    success: true,
-    total_keys: Object.keys(keys).length,
-    active_keys: Object.values(keys).filter((k) => k.active).length,
-    total_requests: Object.values(keys).reduce((s, k) => s + k.requests, 0),
-  });
+const getStats = async (req, res, next) => {
+  try {
+    const stats = await KeyStore.getStats();
+    res.json({ success: true, ...stats });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = { login, getAllKeys, getStats };

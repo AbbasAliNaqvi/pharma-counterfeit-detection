@@ -8,6 +8,8 @@ const morgan = require("morgan");
 const detectRoutes = require("./routes/detect.routes");
 const authRoutes = require("./routes/auth.routes");
 const adminRoutes = require("./routes/admin.routes");
+const { connectDatabase } = require("./utils/db");
+const KeyStore = require("./utils/keyStore");
 const { notFound, errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -44,8 +46,18 @@ app.get("/v1", (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`\nPharmaGuard API is Active`);
+const startServer = async () => {
+  await connectDatabase();
+  await KeyStore.ensureDefaults();
+
+  app.listen(PORT, () => {
+    console.log(`\nPharmaGuard API is Active`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error("Failed to start PharmaGuard API:", error.message);
+  process.exit(1);
 });
 
 module.exports = app;

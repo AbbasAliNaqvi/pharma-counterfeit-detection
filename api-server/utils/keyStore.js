@@ -1,76 +1,107 @@
-const fs = require("fs");
-const path = require("path");
+const ApiKey = require("../models/ApiKey");
 
-const FILE = path.join(__dirname, "../data/keys.json");
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "pg_admin_secret";
 
-const buildDefaults = () => ({
-  pg_test_key: {
-    name: "Demo Key",
-    created: new Date().toISOString(),
-    requests: 0,
-    rateLimit: 100,
-    active: true,
-    admin: false,
-  },
-  [ADMIN_API_KEY]: {
-    name: "Admin Key",
-    created: new Date().toISOString(),
-    requests: 0,
-    rateLimit: 999999,
-    active: true,
+const ensureDefaults = async () => {
+  await ApiKey.findOneAndUpdate(
+    { key: "pg_test_key" },
+    {
+      $setOnInsert: {
+        key: "pg_test_key",
+        name: "Demo Key",
+        requests: 0,
+        rateLimit: 100,
+        active: true,
+        admin: false,
+      },
+    },
+    { upsert: true, new: true },
+  );
+
+  await ApiKey.deleteMany({
     admin: true,
-  },
-});
-
-const ensureDefaults = (loadedKeys = {}) => {
-  const defaults = buildDefaults();
-  const nextKeys = { ...loadedKeys };
-
-  nextKeys.pg_test_key = {
-    ...defaults.pg_test_key,
-    ...(loadedKeys.pg_test_key || {}),
-    admin: false,
-  };
-
-  Object.keys(nextKeys).forEach((key) => {
-    if (nextKeys[key]?.admin) delete nextKeys[key];
+    key: { $ne: ADMIN_API_KEY },
   });
 
-  nextKeys[ADMIN_API_KEY] = {
-    ...defaults[ADMIN_API_KEY],
-    ...(loadedKeys[ADMIN_API_KEY] || {}),
-    admin: true,
-    active: true,
+  await ApiKey.findOneAndUpdate(
+    { key: ADMIN_API_KEY },
+    {
+      $set: {
+        name: "Admin Key",
+        rateLimit: 999999,
+        active: true,
+        admin: true,
+      },
+      $setOnInsert: {
+        key: ADMIN_API_KEY,
+        requests: 0,
+      },
+    },
+    { upsert: true, new: true },
+  );
+};
+
+const findByKey = async (key) => {
+  return ApiKey.findOne({ key }).lean();
+};
+
+const findByEmail = async (email) => {
+  return ApiKey.findOne({ email }).lean();
+};
+
+const createKey = async (payload) => {
+  const doc = await ApiKey.create(payload);
+  return doc.toObject();
+};
+
+const revokeByPrefix = async (prefix) => {
+  const doc = await ApiKey.findOne({
+    key: { $regex: `^${prefix}` },
+  });
+
+  if (!doc) return null;
+
+  doc.active = false;
+  await doc.save();
+  return doc.toObject();
+};
+
+const listKeys = async () => {
+  return ApiKey.find({}).sort({ createdAt: -1 }).lean();
+};
+
+const getStats = async () => {
+  const [totalKeys, activeKeys, requestAgg] = await Promise.all([
+    ApiKey.countDocuments(),
+    ApiKey.countDocuments({ active: true }),
+    ApiKey.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalRequests: { $sum: "$requests" },
+        },
+      },
+    ]),
+  ]);
+
+  return {
+    total_keys: totalKeys,
+    active_keys: activeKeys,
+    total_requests: requestAgg[0]?.totalRequests || 0,
   };
-
-  return nextKeys;
 };
 
-const load = () => {
-  try {
-    if (!fs.existsSync(FILE)) {
-      fs.mkdirSync(path.dirname(FILE), { recursive: true });
-      const defaults = buildDefaults();
-      fs.writeFileSync(FILE, JSON.stringify(defaults, null, 2));
-      return defaults;
-    }
-    const keys = JSON.parse(fs.readFileSync(FILE, "utf-8"));
-    const syncedKeys = ensureDefaults(keys);
-
-    if (JSON.stringify(keys) !== JSON.stringify(syncedKeys)) {
-      save(syncedKeys);
-    }
-
-    return syncedKeys;
-  } catch {
-    return buildDefaults();
-  }
+const incrementRequests = async (key) => {
+  await ApiKey.updateOne({ key }, { $inc: { requests: 1 } });
 };
 
-const save = (keys) => {
-  fs.mkdirSync(path.dirname(FILE), { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(keys, null, 2));
+module.exports = {
+  ensureDefaults,
+  findByKey,
+  findByEmail,
+  createKey,
+  revokeByPrefix,
+  listKeys,
+  getStats,
+  incrementRequests,
 };
-
-module.exports = { load, save };
