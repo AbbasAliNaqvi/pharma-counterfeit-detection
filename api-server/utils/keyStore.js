@@ -2,9 +2,10 @@ const fs = require("fs");
 const path = require("path");
 
 const FILE = path.join(__dirname, "../data/keys.json");
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "pg_admin_secret";
 
-const DEFAULTS = {
-  pg_test_key_demo: {
+const buildDefaults = () => ({
+  pg_test_key: {
     name: "Demo Key",
     created: new Date().toISOString(),
     requests: 0,
@@ -12,7 +13,7 @@ const DEFAULTS = {
     active: true,
     admin: false,
   },
-  pg_admin_secret_change_me: {
+  [ADMIN_API_KEY]: {
     name: "Admin Key",
     created: new Date().toISOString(),
     requests: 0,
@@ -20,18 +21,50 @@ const DEFAULTS = {
     active: true,
     admin: true,
   },
+});
+
+const ensureDefaults = (loadedKeys = {}) => {
+  const defaults = buildDefaults();
+  const nextKeys = { ...loadedKeys };
+
+  nextKeys.pg_test_key = {
+    ...defaults.pg_test_key,
+    ...(loadedKeys.pg_test_key || {}),
+    admin: false,
+  };
+
+  Object.keys(nextKeys).forEach((key) => {
+    if (nextKeys[key]?.admin) delete nextKeys[key];
+  });
+
+  nextKeys[ADMIN_API_KEY] = {
+    ...defaults[ADMIN_API_KEY],
+    ...(loadedKeys[ADMIN_API_KEY] || {}),
+    admin: true,
+    active: true,
+  };
+
+  return nextKeys;
 };
 
 const load = () => {
   try {
     if (!fs.existsSync(FILE)) {
       fs.mkdirSync(path.dirname(FILE), { recursive: true });
-      fs.writeFileSync(FILE, JSON.stringify(DEFAULTS, null, 2));
-      return { ...DEFAULTS };
+      const defaults = buildDefaults();
+      fs.writeFileSync(FILE, JSON.stringify(defaults, null, 2));
+      return defaults;
     }
-    return JSON.parse(fs.readFileSync(FILE, "utf-8"));
+    const keys = JSON.parse(fs.readFileSync(FILE, "utf-8"));
+    const syncedKeys = ensureDefaults(keys);
+
+    if (JSON.stringify(keys) !== JSON.stringify(syncedKeys)) {
+      save(syncedKeys);
+    }
+
+    return syncedKeys;
   } catch {
-    return { ...DEFAULTS };
+    return buildDefaults();
   }
 };
 

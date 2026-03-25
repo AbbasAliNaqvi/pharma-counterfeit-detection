@@ -1,6 +1,51 @@
 const { v4: uuidv4 } = require("uuid");
 const KeyStore = require("../utils/keyStore");
 
+const register = (req, res) => {
+  const { name, email, use } = req.body;
+
+  if (!name || !email || !use) {
+    return res
+      .status(400)
+      .json({ success: false, message: "name, email and use are required." });
+  }
+
+  const keys = KeyStore.load();
+
+  const existing = Object.entries(keys).find(([k, v]) => v.email === email);
+  if (existing) {
+    return res
+      .status(409)
+      .json({
+        success: false,
+        message: "A key already exists for this email.",
+      });
+  }
+
+  const key = "pg_" + uuidv4().replace(/-/g, "").slice(0, 24);
+
+  keys[key] = {
+    name,
+    email,
+    use,
+    created: new Date().toISOString(),
+    requests: 0,
+    rateLimit: 100,
+    active: true,
+    admin: false,
+  };
+
+  KeyStore.save(keys);
+
+  res.status(201).json({
+    success: true,
+    api_key: key,
+    name,
+    rate_limit: 100,
+    message: "Store this key securely.",
+  });
+};
+
 const createKey = (req, res) => {
   const { name = "New Key", rateLimit = 1000 } = req.body;
   const key = "pg_" + uuidv4().replace(/-/g, "").slice(0, 24);
@@ -39,4 +84,4 @@ const revokeKey = (req, res) => {
   res.json({ success: true, message: `Key ${req.params.prefix}... revoked.` });
 };
 
-module.exports = { createKey, revokeKey };
+module.exports = { register, createKey, revokeKey };

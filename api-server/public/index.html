@@ -1,0 +1,1764 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PharmaGuard — AI Counterfeit Medicine API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ── TOKENS ─────────────────────────────────────────────────────── */
+      :root {
+        --g: #10b981;
+        --g2: #059669;
+        --r: #ef4444;
+        --serif: "Playfair Display", serif;
+        --sans: "DM Sans", sans-serif;
+        --mono: "DM Mono", monospace;
+      }
+
+      [data-theme="dark"] {
+        --bg: #000000;
+        --bg2: #070707;
+        --bg3: #0d0d0d;
+        --b1: #141414;
+        --b2: #1d1d1d;
+        --b3: #262626;
+        --t1: #f2f0eb;
+        --t2: #888;
+        --t3: #444;
+        --t4: #222;
+        --card: #070707;
+        --card2: #0d0d0d;
+        --nav-bg: rgba(0, 0, 0, 0.88);
+        --code-bg: #070707;
+        --inp-bg: #000;
+      }
+
+      [data-theme="light"] {
+        --bg: #f0ede6;
+        --bg2: #e8e4dc;
+        --bg3: #dedad1;
+        --b1: #d8d3c8;
+        --b2: #ccc7bb;
+        --b3: #bfb9ab;
+        --t1: #111111;
+        --t2: #555;
+        --t3: #999;
+        --t4: #ddd;
+        --card: #f7f4ef;
+        --card2: #f0ece4;
+        --nav-bg: rgba(240, 237, 230, 0.92);
+        --code-bg: #e8e4dc;
+        --inp-bg: #f7f4ef;
+      }
+
+      /* ── RESET ──────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--t2);
+        font-family: var(--sans);
+        font-size: 14px;
+        line-height: 1.7;
+        transition:
+          background 0.3s,
+          color 0.3s;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* ── NAV ────────────────────────────────────────────────────────── */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        height: 56px;
+        padding: 0 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--nav-bg);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--b1);
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .logo {
+        font-family: var(--serif);
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--t1);
+        letter-spacing: -0.01em;
+      }
+      .logo em {
+        color: var(--g);
+        font-style: normal;
+      }
+      .nav-center {
+        display: flex;
+        gap: 2rem;
+        font-size: 0.78rem;
+        font-weight: 300;
+        color: var(--t3);
+      }
+      .nav-center a {
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+      .nav-center a:hover {
+        color: var(--t1);
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      /* Theme toggle */
+      .theme-toggle {
+        width: 38px;
+        height: 22px;
+        border-radius: 11px;
+        background: var(--b2);
+        border: 1px solid var(--b3);
+        cursor: pointer;
+        position: relative;
+        transition: background 0.3s;
+        flex-shrink: 0;
+      }
+      .theme-toggle::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--t3);
+        transition:
+          transform 0.25s,
+          background 0.3s;
+      }
+      [data-theme="light"] .theme-toggle::after {
+        transform: translateX(16px);
+        background: var(--g);
+      }
+      .theme-icon {
+        font-size: 0.75rem;
+        color: var(--t3);
+        user-select: none;
+        cursor: pointer;
+      }
+
+      .nav-btn {
+        background: var(--g);
+        color: #000;
+        font-family: var(--sans);
+        font-size: 0.72rem;
+        font-weight: 500;
+        padding: 0.4rem 1rem;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+        letter-spacing: 0.03em;
+      }
+      .nav-btn:hover {
+        background: var(--g2);
+      }
+
+      /* ── PAGE SYSTEM ────────────────────────────────────────────────── */
+      .page {
+        display: none;
+        min-height: 100vh;
+        padding-top: 56px;
+      }
+      .page.active {
+        display: block;
+      }
+
+      /* ── HERO ───────────────────────────────────────────────────────── */
+      .hero {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 6rem 2.5rem 5rem;
+        border-bottom: 1px solid var(--b1);
+      }
+      .kicker {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--g);
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.2rem;
+      }
+      .kicker::before {
+        content: "";
+        width: 18px;
+        height: 1px;
+        background: var(--g);
+      }
+      h1.hero-h {
+        font-family: var(--serif);
+        font-size: clamp(3rem, 7vw, 5.5rem);
+        font-weight: 900;
+        color: var(--t1);
+        letter-spacing: -0.04em;
+        line-height: 1.02;
+        margin-bottom: 1.3rem;
+      }
+      h1.hero-h em {
+        color: var(--g);
+        font-style: italic;
+      }
+      .hero-p {
+        font-size: 0.92rem;
+        font-weight: 300;
+        color: var(--t3);
+        max-width: 480px;
+        margin-bottom: 2.5rem;
+        line-height: 1.9;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 0.7rem;
+        flex-wrap: wrap;
+        margin-bottom: 4rem;
+      }
+      .btn-primary {
+        background: var(--g);
+        color: #000;
+        font-family: var(--sans);
+        font-size: 0.78rem;
+        font-weight: 500;
+        padding: 0.65rem 1.5rem;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+        letter-spacing: 0.03em;
+      }
+      .btn-primary:hover {
+        background: var(--g2);
+      }
+      .btn-outline {
+        background: transparent;
+        color: var(--t2);
+        font-family: var(--sans);
+        font-size: 0.78rem;
+        font-weight: 400;
+        padding: 0.65rem 1.5rem;
+        border: 1px solid var(--b3);
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+        letter-spacing: 0.03em;
+      }
+      .btn-outline:hover {
+        border-color: var(--g);
+        color: var(--g);
+      }
+
+      .hero-stats {
+        display: flex;
+        gap: 3.5rem;
+        flex-wrap: wrap;
+        padding-top: 2.5rem;
+        border-top: 1px solid var(--b1);
+      }
+      .stat-n {
+        font-family: var(--serif);
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: var(--g);
+        letter-spacing: -0.03em;
+      }
+      .stat-l {
+        font-size: 0.65rem;
+        font-weight: 400;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-top: 0.1rem;
+      }
+
+      /* ── GENERIC SECTION ────────────────────────────────────────────── */
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 5rem 2.5rem;
+      }
+      .sec-kicker {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--g);
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.7rem;
+      }
+      .sec-kicker::before {
+        content: "";
+        width: 14px;
+        height: 1px;
+        background: var(--g);
+      }
+      h2.sec-h {
+        font-family: var(--serif);
+        font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+        font-weight: 800;
+        color: var(--t1);
+        letter-spacing: -0.03em;
+        margin-bottom: 0.7rem;
+      }
+      .sec-p {
+        font-size: 0.88rem;
+        font-weight: 300;
+        color: var(--t3);
+        max-width: 480px;
+        margin-bottom: 3rem;
+        line-height: 1.9;
+      }
+
+      /* ── STEPS ──────────────────────────────────────────────────────── */
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1px;
+        background: var(--b1);
+      }
+      .step {
+        background: var(--bg);
+        padding: 2rem 1.6rem;
+        transition: background 0.3s;
+      }
+      .step-n {
+        font-family: var(--serif);
+        font-size: 3.5rem;
+        font-weight: 900;
+        color: var(--b2);
+        line-height: 1;
+        margin-bottom: 0.9rem;
+        transition: color 0.3s;
+      }
+      .step-t {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--t1);
+        margin-bottom: 0.35rem;
+        letter-spacing: 0.02em;
+      }
+      .step-d {
+        font-size: 0.78rem;
+        font-weight: 300;
+        color: var(--t3);
+        line-height: 1.8;
+      }
+
+      /* ── CODE ───────────────────────────────────────────────────────── */
+      .code-wrap {
+        background: var(--code-bg);
+        border: 1px solid var(--b1);
+        overflow: hidden;
+        margin: 0.8rem 0;
+        transition: background 0.3s;
+      }
+      .code-bar {
+        background: var(--bg3);
+        border-bottom: 1px solid var(--b1);
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        transition: background 0.3s;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+      }
+      .code-body {
+        padding: 1.3rem 1.2rem;
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        overflow-x: auto;
+        line-height: 1.85;
+        color: var(--t2);
+      }
+      .kw {
+        color: var(--g);
+      }
+      .str {
+        color: #a3e635;
+      }
+      .cm {
+        color: var(--t3);
+      }
+      .nm {
+        color: #f59e0b;
+      }
+
+      /* ── QUICK TRY ──────────────────────────────────────────────────── */
+      .try-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+      @media (max-width: 760px) {
+        .try-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .try-panel {
+        background: var(--card);
+        border: 1px solid var(--b1);
+        transition: background 0.3s;
+      }
+      .try-head {
+        padding: 0.85rem 1.2rem;
+        border-bottom: 1px solid var(--b1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+      }
+      .try-live {
+        font-size: 0.65rem;
+        color: var(--g);
+        letter-spacing: 0.05em;
+        text-transform: none;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .try-live::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--g);
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .try-body {
+        padding: 1.2rem;
+      }
+
+      .field {
+        margin-bottom: 0.9rem;
+      }
+      .field label {
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 0.35rem;
+      }
+      .inp {
+        width: 100%;
+        background: var(--inp-bg);
+        border: 1px solid var(--b2);
+        color: var(--t1);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        padding: 0.58rem 0.8rem;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.3s;
+      }
+      .inp:focus {
+        border-color: var(--g);
+      }
+      .inp::placeholder {
+        color: var(--t3);
+      }
+      select.inp {
+        cursor: pointer;
+        -webkit-appearance: none;
+      }
+
+      .file-label {
+        display: block;
+        background: var(--inp-bg);
+        border: 1px dashed var(--b3);
+        padding: 1.2rem;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s,
+          background 0.3s;
+        font-size: 0.75rem;
+        color: var(--t3);
+      }
+      .file-label:hover {
+        border-color: var(--g);
+        color: var(--g);
+      }
+      #try-file {
+        display: none;
+      }
+
+      .try-result {
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        line-height: 1.85;
+        color: var(--t2);
+        min-height: 210px;
+        word-break: break-all;
+        white-space: pre-wrap;
+      }
+      .try-result .auth {
+        color: var(--g);
+      }
+      .try-result .fake {
+        color: var(--r);
+      }
+      .try-result .mute {
+        color: var(--t3);
+      }
+
+      /* ── PRICING ────────────────────────────────────────────────────── */
+      .plans {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1px;
+        background: var(--b1);
+        margin-top: 2.5rem;
+      }
+      .plan {
+        background: var(--bg);
+        padding: 2rem 1.8rem;
+        transition: background 0.3s;
+      }
+      .plan.featured {
+        background: var(--card);
+      }
+      .plan-eye {
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--g);
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        margin-bottom: 0.7rem;
+      }
+      .plan-name {
+        font-family: var(--serif);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--t1);
+        letter-spacing: -0.01em;
+        margin-bottom: 0.2rem;
+      }
+      .plan-price {
+        font-family: var(--serif);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--t1);
+        letter-spacing: -0.04em;
+        margin: 0.6rem 0;
+      }
+      .plan-price sub {
+        font-size: 0.85rem;
+        color: var(--t3);
+        font-family: var(--sans);
+        font-weight: 300;
+      }
+      .plan-features {
+        list-style: none;
+        font-size: 0.8rem;
+        font-weight: 300;
+        color: var(--t3);
+        margin: 0.8rem 0 1.5rem;
+      }
+      .plan-features li {
+        padding: 0.3rem 0;
+        border-bottom: 1px solid var(--b1);
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .plan-features li::before {
+        content: "—";
+        color: var(--g);
+        flex-shrink: 0;
+      }
+
+      /* ── GET KEY ────────────────────────────────────────────────────── */
+      .key-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .key-card {
+        background: var(--card);
+        border: 1px solid var(--b1);
+        padding: 2.8rem;
+        width: 100%;
+        max-width: 520px;
+        transition: background 0.3s;
+      }
+      .form-title {
+        font-family: var(--serif);
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--t1);
+        letter-spacing: -0.02em;
+        margin-bottom: 0.4rem;
+      }
+      .form-sub {
+        font-size: 0.8rem;
+        font-weight: 300;
+        color: var(--t3);
+        margin-bottom: 2rem;
+        line-height: 1.85;
+      }
+      .key-result {
+        display: none;
+        margin-top: 1.5rem;
+        background: var(--inp-bg);
+        border: 1px solid var(--g);
+        padding: 1.3rem;
+        transition: background 0.3s;
+      }
+      .key-result-label {
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+      }
+      .key-val {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        color: var(--g);
+        word-break: break-all;
+        margin-bottom: 0.55rem;
+      }
+      .copy-btn {
+        background: transparent;
+        border: 1px solid var(--b3);
+        color: var(--t3);
+        font-family: var(--sans);
+        font-size: 0.65rem;
+        padding: 0.28rem 0.7rem;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+        letter-spacing: 0.05em;
+      }
+      .copy-btn:hover {
+        border-color: var(--g);
+        color: var(--g);
+      }
+      .key-meta {
+        margin-top: 0.9rem;
+        padding-top: 0.9rem;
+        border-top: 1px solid var(--b1);
+        font-size: 0.72rem;
+        color: var(--t3);
+        line-height: 1.9;
+        font-weight: 300;
+      }
+      .key-meta .hl {
+        color: var(--g);
+        font-weight: 400;
+      }
+      .err {
+        font-size: 0.75rem;
+        color: var(--r);
+        margin-top: 0.7rem;
+        display: none;
+        font-weight: 300;
+      }
+
+      /* ── ADMIN ──────────────────────────────────────────────────────── */
+      .admin-login-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        min-height: calc(100vh - 56px);
+      }
+      .admin-card {
+        background: var(--card);
+        border: 1px solid var(--b1);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 370px;
+        transition: background 0.3s;
+      }
+      .admin-title {
+        font-family: var(--serif);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--t1);
+        letter-spacing: -0.02em;
+        margin-bottom: 0.3rem;
+      }
+      .admin-sub {
+        font-size: 0.78rem;
+        font-weight: 300;
+        color: var(--t3);
+        margin-bottom: 1.8rem;
+      }
+
+      .admin-dash {
+        display: none;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem 2.5rem;
+      }
+      .dash-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.2rem;
+        border-bottom: 1px solid var(--b1);
+        margin-bottom: 2rem;
+      }
+      .dash-title {
+        font-family: var(--serif);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--t1);
+        letter-spacing: -0.02em;
+      }
+      .logout-btn {
+        background: transparent;
+        border: 1px solid var(--b3);
+        color: var(--t3);
+        font-family: var(--sans);
+        font-size: 0.68rem;
+        padding: 0.3rem 0.8rem;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .logout-btn:hover {
+        border-color: var(--r);
+        color: var(--r);
+      }
+
+      .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: var(--b1);
+        margin-bottom: 2rem;
+      }
+      @media (max-width: 640px) {
+        .kpi-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .kpi {
+        background: var(--bg);
+        padding: 1.3rem 1.5rem;
+        transition: background 0.3s;
+      }
+      .kpi-l {
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.35rem;
+      }
+      .kpi-v {
+        font-family: var(--serif);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--g);
+        letter-spacing: -0.02em;
+      }
+
+      .sec-label {
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        margin-bottom: 0.9rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--b1);
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+      }
+      thead th {
+        text-align: left;
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--t3);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--b1);
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--bg3);
+        transition: background 0.15s;
+      }
+      tbody tr:hover {
+        background: var(--card);
+      }
+      tbody td {
+        padding: 0.62rem 0.9rem;
+        color: var(--t2);
+        font-weight: 300;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.6rem;
+        padding: 0.13rem 0.48rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+      }
+      .bg {
+        background: rgba(16, 185, 129, 0.07);
+        color: var(--g);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+      }
+      .br {
+        background: rgba(239, 68, 68, 0.07);
+        color: var(--r);
+        border: 1px solid rgba(239, 68, 68, 0.15);
+      }
+      .by {
+        background: rgba(245, 158, 11, 0.07);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.15);
+      }
+      .rev-btn {
+        background: transparent;
+        border: 1px solid var(--b3);
+        color: var(--t3);
+        font-family: var(--sans);
+        font-size: 0.62rem;
+        padding: 0.22rem 0.55rem;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .rev-btn:hover {
+        border-color: var(--r);
+        color: var(--r);
+      }
+
+      .nk-row {
+        display: flex;
+        gap: 0.7rem;
+        flex-wrap: wrap;
+        margin-top: 0.9rem;
+      }
+      .nk-row .inp {
+        flex: 1;
+        min-width: 140px;
+        font-family: var(--sans);
+      }
+      .nk-result {
+        display: none;
+        margin-top: 0.8rem;
+        padding: 0.9rem 1rem;
+        background: var(--inp-bg);
+        border: 1px solid var(--g);
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--g);
+        transition: background 0.3s;
+      }
+
+      /* ── FOOTER ─────────────────────────────────────────────────────── */
+      footer {
+        border-top: 1px solid var(--b1);
+        padding: 1.5rem 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.65rem;
+        color: var(--t3);
+        font-weight: 300;
+      }
+
+      @media (max-width: 640px) {
+        nav .nav-center {
+          display: none;
+        }
+        h1.hero-h {
+          font-size: 2.6rem;
+        }
+        .hero,
+        .wrap {
+          padding: 3rem 1.2rem;
+        }
+        footer {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="logo">Pharma<em>Guard</em></div>
+      <div class="nav-center">
+        <a onclick="show('home')">Home</a>
+        <a
+          onclick="
+            show('home');
+            setTimeout(
+              () =>
+                document
+                  .getElementById('docs')
+                  .scrollIntoView({ behavior: 'smooth' }),
+              80,
+            );
+          "
+          >Docs</a
+        >
+        <a onclick="show('getkey')">Get Key</a>
+        <a onclick="show('admin')">Admin</a>
+      </div>
+      <div class="nav-right">
+        <span class="theme-icon" id="theme-icon">☀</span>
+        <div
+          class="theme-toggle"
+          id="toggle"
+          onclick="toggleTheme()"
+          title="Toggle theme"
+        ></div>
+        <button class="nav-btn" onclick="show('getkey')">Get Free Key</button>
+      </div>
+    </nav>
+
+    <!-- ══════════════════════════ HOME ══════════════════════════════ -->
+    <div id="page-home" class="page active">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="kicker">AI-Powered Pharmaceutical Security</div>
+        <h1 class="hero-h">
+          Detect Counterfeit<br />Medicine, <em>Instantly.</em>
+        </h1>
+        <p class="hero-p">
+          One API call. Upload any medicine image — tablet, capsule, or
+          packaging — and receive an authentic vs. counterfeit verdict with
+          visual AI explanation.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="show('getkey')">
+            Get Free API Key
+          </button>
+          <button
+            class="btn-outline"
+            onclick="
+              document
+                .getElementById('docs')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+          >
+            View Documentation
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="stat-n">96%</div>
+            <div class="stat-l">Test Accuracy</div>
+          </div>
+          <div>
+            <div class="stat-n">0.9947</div>
+            <div class="stat-l">AUC-ROC Score</div>
+          </div>
+          <div>
+            <div class="stat-n">8,000</div>
+            <div class="stat-l">Training Images</div>
+          </div>
+          <div>
+            <div class="stat-n">50/day</div>
+            <div class="stat-l">Free Tier Calls</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="wrap">
+        <div class="sec-kicker">How it works</div>
+        <h2 class="sec-h">From image to verdict in seconds</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-n">01</div>
+            <div class="step-t">Get API Key</div>
+            <div class="step-d">
+              Register free. Receive a key with 50 calls per day, instantly. No
+              credit card.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">02</div>
+            <div class="step-t">Send Image</div>
+            <div class="step-d">
+              POST any medicine photo to /v1/detect/analyse with your API key in
+              the header.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">03</div>
+            <div class="step-t">Get Result</div>
+            <div class="step-d">
+              Prediction, confidence score, probabilities, risk level. Grad-CAM
+              heatmap optional.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">04</div>
+            <div class="step-t">Integrate</div>
+            <div class="step-d">
+              Embed into your hospital, pharmacy, or supply chain system in
+              minutes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Docs + Quick Try -->
+      <div class="wrap" id="docs" style="border-top: 1px solid var(--b1)">
+        <div class="sec-kicker">Quick Start</div>
+        <h2 class="sec-h">Integration in minutes</h2>
+        <p class="sec-p">
+          Works with any HTTP client. No SDK needed. Try it live with your key.
+        </p>
+
+        <div class="try-grid">
+          <!-- Code examples -->
+          <div>
+            <div class="code-wrap">
+              <div class="code-bar">
+                <div class="dot" style="background: #ef4444"></div>
+                <div class="dot" style="background: #f59e0b"></div>
+                <div class="dot" style="background: #10b981"></div>
+                <span
+                  style="
+                    margin-left: 0.5rem;
+                    font-size: 0.64rem;
+                    color: var(--t3);
+                    font-family: var(--mono);
+                  "
+                  >bash</span
+                >
+              </div>
+              <div class="code-body">
+                <pre><span class="cm"># Classify a medicine image</span>
+<span class="kw">curl</span> -X POST \
+  https://your-api.com/<span class="str">v1/detect/analyse</span> \
+  -H <span class="str">"X-API-Key: pg_your_key_here"</span> \
+  -F <span class="str">"image=@pill.jpg"</span></pre>
+              </div>
+            </div>
+            <div class="code-wrap">
+              <div class="code-bar">
+                <div class="dot" style="background: #ef4444"></div>
+                <div class="dot" style="background: #f59e0b"></div>
+                <div class="dot" style="background: #10b981"></div>
+                <span
+                  style="
+                    margin-left: 0.5rem;
+                    font-size: 0.64rem;
+                    color: var(--t3);
+                    font-family: var(--mono);
+                  "
+                  >response.json</span
+                >
+              </div>
+              <div class="code-body">
+                <pre>{
+  <span class="str">"success"</span>: <span class="kw">true</span>,
+  <span class="str">"result"</span>: {
+    <span class="str">"prediction"</span>:   <span class="str">"Authentic"</span>,
+    <span class="str">"confidence"</span>:   <span class="nm">0.988</span>,
+    <span class="str">"is_authentic"</span>: <span class="kw">true</span>,
+    <span class="str">"risk_level"</span>:   <span class="str">"LOW"</span>,
+    <span class="str">"probabilities"</span>: {
+      <span class="str">"authentic"</span>:   <span class="nm">0.988</span>,
+      <span class="str">"counterfeit"</span>: <span class="nm">0.012</span>
+    }
+  }
+}</pre>
+              </div>
+            </div>
+            <div class="code-wrap">
+              <div class="code-bar">
+                <div class="dot" style="background: #ef4444"></div>
+                <div class="dot" style="background: #f59e0b"></div>
+                <div class="dot" style="background: #10b981"></div>
+                <span
+                  style="
+                    margin-left: 0.5rem;
+                    font-size: 0.64rem;
+                    color: var(--t3);
+                    font-family: var(--mono);
+                  "
+                  >javascript</span
+                >
+              </div>
+              <div class="code-body">
+                <pre><span class="cm">// Node.js / fetch</span>
+<span class="kw">const</span> form = <span class="kw">new</span> FormData();
+form.append(<span class="str">'image'</span>, fs.createReadStream(<span class="str">'pill.jpg'</span>));
+
+<span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'/v1/detect/analyse'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'X-API-Key'</span>: <span class="str">'pg_your_key'</span> },
+  body: form
+});
+<span class="kw">const</span> { result } = <span class="kw">await</span> res.json();</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Try panel -->
+          <div>
+            <div class="try-panel">
+              <div class="try-head">
+                <span>Quick Try</span>
+                <span class="try-live">Live test</span>
+              </div>
+              <div class="try-body">
+                <div class="field">
+                  <label>Your API Key</label>
+                  <input
+                    class="inp"
+                    id="try-key"
+                    placeholder="pg_xxxxxxxxxxxxxxxxxxxxxxxx"
+                  />
+                </div>
+                <div class="field">
+                  <label>Endpoint</label>
+                  <select
+                    class="inp"
+                    id="try-ep"
+                    onchange="
+                      document.getElementById('try-ff').style.display =
+                        this.value === 'status' ? 'none' : 'block'
+                    "
+                  >
+                    <option value="analyse">POST /v1/detect/analyse</option>
+                    <option value="status">GET /v1/detect/status</option>
+                  </select>
+                </div>
+                <div class="field" id="try-ff">
+                  <label>Medicine Image</label>
+                  <label class="file-label" for="try-file" id="try-file-lbl"
+                    >Click to choose image — JPG / PNG / WEBP</label
+                  >
+                  <input
+                    type="file"
+                    id="try-file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onchange="
+                      document.getElementById('try-file-lbl').textContent = this
+                        .files[0]
+                        ? this.files[0].name
+                        : 'Click to choose image — JPG / PNG / WEBP'
+                    "
+                  />
+                </div>
+                <button
+                  class="btn-primary"
+                  style="width: 100%; font-size: 0.78rem; padding: 0.65rem"
+                  onclick="runTry()"
+                >
+                  Send Request →
+                </button>
+              </div>
+            </div>
+
+            <div class="try-panel" style="margin-top: 1px">
+              <div class="try-head">
+                <span>Response</span>
+                <span
+                  id="status-badge"
+                  style="
+                    font-family: var(--mono);
+                    font-size: 0.68rem;
+                    color: var(--t3);
+                  "
+                  >—</span
+                >
+              </div>
+              <div class="try-body">
+                <div
+                  id="try-spin"
+                  style="
+                    display: none;
+                    text-align: center;
+                    padding: 1.5rem;
+                    font-size: 0.75rem;
+                    color: var(--t3);
+                  "
+                >
+                  Sending request...
+                </div>
+                <pre class="try-result" id="try-out">
+// Response will appear here</pre
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="wrap" style="border-top: 1px solid var(--b1)">
+        <div class="sec-kicker">Pricing</div>
+        <h2 class="sec-h">Simple plans</h2>
+        <div class="plans">
+          <div class="plan featured">
+            <div class="plan-eye">Free Forever</div>
+            <div class="plan-name">Developer</div>
+            <div class="plan-price">$0 <sub>/month</sub></div>
+            <ul class="plan-features">
+              <li>50 API calls per day</li>
+              <li>Both detection endpoints</li>
+              <li>Grad-CAM heatmap included</li>
+              <li>Full JSON responses</li>
+              <li>No credit card</li>
+            </ul>
+            <button
+              class="btn-primary"
+              style="width: 100%; font-size: 0.78rem"
+              onclick="show('getkey')"
+            >
+              Get Free Key
+            </button>
+          </div>
+          <div class="plan">
+            <div class="plan-eye">Coming Soon</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">$9 <sub>/month</sub></div>
+            <ul class="plan-features">
+              <li>5,000 calls per day</li>
+              <li>Priority processing</li>
+              <li>Batch endpoint</li>
+              <li>Email support</li>
+              <li>SLA guarantee</li>
+            </ul>
+            <button
+              class="btn-outline"
+              style="width: 100%; font-size: 0.78rem; opacity: 0.6"
+              disabled
+            >
+              Notify Me
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════ GET KEY ══════════════════════════ -->
+    <div id="page-getkey" class="page key-page">
+      <div style="width: 100%; max-width: 580px; padding: 2rem">
+        <div style="text-align: center; margin-bottom: 2rem">
+          <div
+            class="kicker"
+            style="justify-content: center; margin-bottom: 0.5rem"
+          >
+            Free Tier
+          </div>
+          <h2
+            style="
+              font-family: var(--serif);
+              font-size: 2rem;
+              font-weight: 800;
+              color: var(--t1);
+              letter-spacing: -0.03em;
+            "
+          >
+            Get Your API Key
+          </h2>
+          <p
+            style="
+              font-size: 0.82rem;
+              font-weight: 300;
+              color: var(--t3);
+              margin-top: 0.4rem;
+            "
+          >
+            50 free calls per day. No credit card. Instant.
+          </p>
+        </div>
+        <div class="key-card">
+          <div class="field">
+            <label>Full Name</label
+            ><input class="inp" id="kn" placeholder="Abbas Ali" />
+          </div>
+          <div class="field">
+            <label>Email Address</label
+            ><input
+              class="inp"
+              id="ke"
+              type="email"
+              placeholder="you@example.com"
+            />
+          </div>
+          <div class="field">
+            <label>Intended Use</label
+            ><input
+              class="inp"
+              id="ku"
+              placeholder="Research / Hospital / Personal Project"
+            />
+          </div>
+          <button
+            class="btn-primary"
+            style="width: 100%; font-size: 0.78rem; padding: 0.7rem"
+            onclick="genKey()"
+          >
+            Generate API Key
+          </button>
+          <div class="err" id="kerr"></div>
+          <div class="key-result" id="kresult">
+            <div class="key-result-label">Your API Key</div>
+            <div class="key-val" id="kval"></div>
+            <button class="copy-btn" onclick="copyKey()">Copy</button>
+            <div class="key-meta">
+              <span class="hl">Plan:</span> Developer (Free) &nbsp;·&nbsp;
+              <span class="hl">Limit:</span> 50 requests / day<br />
+              Header:
+              <code style="color: var(--g); font-family: var(--mono)"
+                >X-API-Key: your_key</code
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════ ADMIN ══════════════════════════ -->
+    <div id="page-admin" class="page">
+      <div class="admin-login-wrap" id="login-wrap">
+        <div class="admin-card">
+          <div class="admin-title">Admin Access</div>
+          <div class="admin-sub">Restricted area. Enter your credentials.</div>
+          <div class="field">
+            <label>Admin ID</label
+            ><input class="inp" id="aid" placeholder="Admin1" />
+          </div>
+          <div class="field">
+            <label>Password</label
+            ><input
+              class="inp"
+              id="apw"
+              type="password"
+              placeholder="••••••••"
+              onkeydown="if (event.key === 'Enter') doLogin();"
+            />
+          </div>
+          <button
+            class="btn-primary"
+            style="width: 100%; font-size: 0.78rem; padding: 0.7rem"
+            onclick="doLogin()"
+          >
+            Sign In
+          </button>
+          <div class="err" id="aerr">Invalid credentials.</div>
+        </div>
+      </div>
+
+      <div class="admin-dash" id="admin-dash">
+        <div class="dash-head">
+          <div class="dash-title">Dashboard</div>
+          <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+        </div>
+        <div class="kpi-row" id="kpi-row"></div>
+        <div class="sec-label">All API Keys</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Prefix</th>
+                <th>Requests</th>
+                <th>Limit</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="keys-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top: 2.5rem">
+          <div class="sec-label">Generate New Key</div>
+          <div class="nk-row">
+            <input
+              class="inp"
+              id="nk-n"
+              placeholder="Client name"
+              style="font-family: var(--sans)"
+            />
+            <input
+              class="inp"
+              id="nk-e"
+              placeholder="Email"
+              style="font-family: var(--sans); max-width: 200px"
+            />
+            <input
+              class="inp"
+              id="nk-l"
+              type="number"
+              placeholder="Daily limit"
+              value="1000"
+              style="font-family: var(--sans); max-width: 130px"
+            />
+            <button
+              class="btn-primary"
+              style="padding: 0.6rem 1.2rem; font-size: 0.75rem"
+              onclick="adminGen()"
+            >
+              Generate
+            </button>
+          </div>
+          <div class="nk-result" id="nk-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span
+        >PharmaGuard API &nbsp;·&nbsp; MobileNetV3-Small &nbsp;·&nbsp; PyTorch +
+        ONNX + Node.js + MongoDB</span
+      >
+      <span
+        >Test Accuracy 96% &nbsp;·&nbsp; AUC-ROC 0.9947 &nbsp;·&nbsp; Grad-CAM
+        XAI</span
+      >
+    </footer>
+
+    <script>
+      const API = window.location.origin;
+
+      function getAdminKey() {
+        return sessionStorage.getItem("adminKey") || "";
+      }
+
+      /* ── Theme ──────────────────────────────────────────────────────── */
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute("data-theme") === "dark";
+        html.setAttribute("data-theme", isDark ? "light" : "dark");
+        document.getElementById("theme-icon").textContent = isDark ? "☾" : "☀";
+        localStorage.setItem("theme", isDark ? "light" : "dark");
+      }
+      (function () {
+        const saved = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", saved);
+        document.getElementById("theme-icon").textContent =
+          saved === "dark" ? "☀" : "☾";
+      })();
+
+      /* ── Page routing ───────────────────────────────────────────────── */
+      function show(id) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => (p.style.display = "none"));
+        document.getElementById("page-" + id).style.display = "block";
+        window.scrollTo(0, 0);
+        if (
+          id === "admin" &&
+          sessionStorage.getItem("admin") === "1" &&
+          getAdminKey()
+        ) {
+          document.getElementById("login-wrap").style.display = "none";
+          document.getElementById("admin-dash").style.display = "block";
+          loadDash();
+        }
+      }
+
+      /* ── Quick Try ──────────────────────────────────────────────────── */
+      async function runTry() {
+        const key = document.getElementById("try-key").value.trim();
+        const ep = document.getElementById("try-ep").value;
+        const file = document.getElementById("try-file").files[0];
+        const out = document.getElementById("try-out");
+        const spin = document.getElementById("try-spin");
+        const badge = document.getElementById("status-badge");
+
+        if (!key) {
+          out.innerHTML =
+            '<span class="fake">Error: Enter your API key first.</span>';
+          return;
+        }
+
+        spin.style.display = "block";
+        out.textContent = "";
+        badge.textContent = "...";
+        badge.style.color = "var(--t3)";
+
+        try {
+          let res;
+          if (ep === "status") {
+            res = await fetch(`${API}/v1/detect/status`, {
+              headers: { "X-API-Key": key },
+            });
+          } else {
+            if (!file) {
+              spin.style.display = "none";
+              out.innerHTML =
+                '<span class="fake">Error: Select an image file first.</span>';
+              return;
+            }
+            const fd = new FormData();
+            fd.append("image", file);
+            res = await fetch(`${API}/v1/detect/analyse`, {
+              method: "POST",
+              headers: { "X-API-Key": key },
+              body: fd,
+            });
+          }
+          const data = await res.json();
+          badge.textContent = res.ok
+            ? `${res.status} OK`
+            : `${res.status} Error`;
+          badge.style.color = res.ok ? "var(--g)" : "var(--r)";
+          const pretty = JSON.stringify(data, null, 2);
+          out.innerHTML = pretty
+            .replace(
+              /"(Authentic|authentic|true)"/g,
+              '"<span class="auth">$1</span>"',
+            )
+            .replace(/: (true)(?=[\n,}])/g, ': <span class="auth">$1</span>')
+            .replace(
+              /"(Counterfeit|counterfeit|false)"/g,
+              '"<span class="fake">$1</span>"',
+            )
+            .replace(/: (false)(?=[\n,}])/g, ': <span class="fake">$1</span>')
+            .replace(/"([^"]+)":/g, '"<span class="mute">$1</span>":');
+        } catch {
+          badge.textContent = "Error";
+          badge.style.color = "var(--r)";
+          out.innerHTML =
+            '<span class="fake">Could not connect. Is the API server running?</span>';
+        }
+        spin.style.display = "none";
+      }
+
+      /* ── Get Key ────────────────────────────────────────────────────── */
+      async function genKey() {
+        const name = document.getElementById("kn").value.trim(),
+          email = document.getElementById("ke").value.trim(),
+          use = document.getElementById("ku").value.trim();
+        const err = document.getElementById("kerr"),
+          res_el = document.getElementById("kresult");
+        err.style.display = "none";
+        res_el.style.display = "none";
+        if (!name || !email || !use) {
+          err.textContent = "Please fill in all fields.";
+          err.style.display = "block";
+          return;
+        }
+        if (!email.includes("@")) {
+          err.textContent = "Enter a valid email address.";
+          err.style.display = "block";
+          return;
+        }
+        try {
+          const r = await fetch(`${API}/v1/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, use }),
+          });
+          const d = await r.json();
+          if (d.success) {
+            document.getElementById("kval").textContent = d.api_key;
+            res_el.style.display = "block";
+          } else {
+            err.textContent = d.message || "Something went wrong.";
+            err.style.display = "block";
+          }
+        } catch {
+          err.textContent = "Cannot connect to server.";
+          err.style.display = "block";
+        }
+      }
+      function copyKey() {
+        navigator.clipboard.writeText(
+          document.getElementById("kval").textContent,
+        );
+        const btn = document.querySelector(".copy-btn");
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = "Copy"), 2000);
+      }
+
+      /* ── Admin ──────────────────────────────────────────────────────── */
+      async function doLogin() {
+        const id = document.getElementById("aid").value,
+          pw = document.getElementById("apw").value;
+        const err = document.getElementById("aerr");
+
+        try {
+          const r = await fetch(`${API}/v1/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, password: pw }),
+          });
+          const d = await r.json();
+
+          if (!r.ok || !d.success || !d.api_key) {
+            err.textContent = d.message || "Invalid credentials.";
+            err.style.display = "block";
+            return;
+          }
+
+          sessionStorage.setItem("admin", "1");
+          sessionStorage.setItem("adminKey", d.api_key);
+          document.getElementById("login-wrap").style.display = "none";
+          document.getElementById("admin-dash").style.display = "block";
+          err.style.display = "none";
+          loadDash();
+        } catch {
+          err.textContent = "Cannot connect to server.";
+          err.style.display = "block";
+        }
+      }
+      function doLogout() {
+        sessionStorage.removeItem("admin");
+        sessionStorage.removeItem("adminKey");
+        document.getElementById("login-wrap").style.display = "flex";
+        document.getElementById("admin-dash").style.display = "none";
+        document.getElementById("aid").value = "";
+        document.getElementById("apw").value = "";
+      }
+
+      async function loadDash() {
+        const adminKey = getAdminKey();
+        if (!adminKey) {
+          doLogout();
+          return;
+        }
+
+        try {
+          const [kr, sr] = await Promise.all([
+            fetch(`${API}/v1/admin/keys`, {
+              headers: { "X-API-Key": adminKey },
+            }),
+            fetch(`${API}/v1/admin/stats`, {
+              headers: { "X-API-Key": adminKey },
+            }),
+          ]);
+          const kd = await kr.json(),
+            sd = await sr.json();
+          document.getElementById("kpi-row").innerHTML = `
+      <div class="kpi"><div class="kpi-l">Total Keys</div><div class="kpi-v">${sd.total_keys || 0}</div></div>
+      <div class="kpi"><div class="kpi-l">Active Keys</div><div class="kpi-v">${sd.active_keys || 0}</div></div>
+      <div class="kpi"><div class="kpi-l">Total Requests</div><div class="kpi-v">${sd.total_requests || 0}</div></div>
+      <div class="kpi"><div class="kpi-l">Model Accuracy</div><div class="kpi-v">96%</div></div>`;
+          const tbody = document.getElementById("keys-tbody");
+          tbody.innerHTML = "";
+          (kd.keys || []).forEach((k) => {
+            const st = k.active
+              ? `<span class="badge bg">Active</span>`
+              : `<span class="badge br">Revoked</span>`;
+            const ad = k.admin ? `<span class="badge by">Admin</span>` : "";
+            tbody.innerHTML += `<tr>
+        <td>${k.name}</td>
+        <td style="color:var(--t3);font-size:.7rem">${k.email || "—"}</td>
+        <td style="font-family:var(--mono);color:var(--g);font-size:.7rem">${k.prefix}</td>
+        <td>${k.requests}</td><td>${k.rate_limit}</td>
+        <td>${st} ${ad}</td>
+        <td style="color:var(--t3)">${new Date(k.created).toLocaleDateString()}</td>
+        <td>${!k.admin ? `<button class="rev-btn" onclick="revoke('${k.prefix}')">Revoke</button>` : "—"}</td>
+      </tr>`;
+          });
+        } catch {
+          document.getElementById("kpi-row").innerHTML =
+            `<div style="color:var(--r);font-size:.75rem;grid-column:1/-1;padding:1.2rem">Cannot connect to API server.</div>`;
+        }
+      }
+
+      async function revoke(prefix) {
+        const adminKey = getAdminKey();
+        if (!adminKey) return doLogout();
+        if (!confirm(`Revoke key ${prefix}...?`)) return;
+        await fetch(`${API}/v1/auth/keys/${prefix}`, {
+          method: "DELETE",
+          headers: { "X-API-Key": adminKey },
+        });
+        loadDash();
+      }
+
+      async function adminGen() {
+        const adminKey = getAdminKey();
+        if (!adminKey) return doLogout();
+        const name = document.getElementById("nk-n").value.trim(),
+          email = document.getElementById("nk-e").value.trim(),
+          limit = document.getElementById("nk-l").value;
+        if (!name || !email) return;
+        const r = await fetch(`${API}/v1/auth/keys`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": adminKey,
+          },
+          body: JSON.stringify({ name, email, rateLimit: parseInt(limit) }),
+        });
+        const d = await r.json();
+        const el = document.getElementById("nk-result");
+        el.style.display = "block";
+        el.innerHTML = `New key: <strong>${d.api_key}</strong> <button class="copy-btn" onclick="navigator.clipboard.writeText('${d.api_key}')" style="margin-left:.5rem">Copy</button>`;
+        loadDash();
+      }
+    </script>
+  </body>
+</html>
